@@ -93,7 +93,7 @@ export const LikeButton = ({ postId }: Props) => {
   const likes = votes?.filter((v) => v.vote === 1).length || 0;
   const dislikes = votes?.filter((v) => v.vote === -1).length || 0;
   const userVote = votes?.find((v) => v.user_id === user?.id)?.vote;
-  // this change
+  
   if (!user) return <div>Please log in to vote</div>;
   return (
     <div className="flex items-center space-x-4 my-4">
