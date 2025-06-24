@@ -52,6 +52,7 @@ export const PostDetail = ({ postId }: Props) => {
       </p>
       
       <LikeButton postId={postId}/>
+      {/*COmment section added*/}
       <CommentSection postId={postId}/>
       </div>
     )
