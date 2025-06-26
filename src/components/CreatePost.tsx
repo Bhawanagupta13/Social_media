@@ -1,18 +1,18 @@
 import { useState } from "react";
 import type { ChangeEvent } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import  { supabase } from "../supabase-client";
 import { useAuth } from "../context/AuthContext";
+import { fetchCommunities, type Community } from "./CommunityList";
 
 interface PostInput{
   title:string;
   content:string;
   avatar_url:string | null;
+  community_id?: number | null;
 }
 
 const createPost = async (post: PostInput,imageFile: File) => { 
-  
-
   const filePath =`${post.title}-${Date.now()}-${imageFile.name}`
 
   const {error: uploadError}= await supabase.storage.from("post-images").upload(filePath,imageFile)
@@ -31,9 +31,15 @@ const createPost = async (post: PostInput,imageFile: File) => {
 export const CreatePost = () =>{
   const [title,setTitle] = useState<string>("");
   const [content,setContent] = useState<string>("");
+  const [communityId, setCommunityId] = useState<number | null>(null);
   const [selectedFile,setSelectedFile] = useState<File | null>(null);
 
   const { user } = useAuth();
+
+  const { data:communities } = useQuery<Community[], Error>({
+    queryKey: ["communities"],
+    queryFn: fetchCommunities,
+  });
 
   const {mutate,isPending,isError} = useMutation
   ({mutationFn: (data: { post: PostInput; imageFile: File }) => {
@@ -45,7 +51,12 @@ export const CreatePost = () =>{
   const handleSubmit = (event: React.FormEvent)=>{
     event.preventDefault()
     if(!selectedFile) return;
-    mutate({post:{ title,content,avatar_url:user?.user_metadata.avatar_url || null,},imageFile:selectedFile }); 
+    mutate({post:{ title,content,avatar_url:user?.user_metadata.avatar_url || null,community_id: communityId,},imageFile:selectedFile }); 
+  };
+
+  const handleCommunityChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setCommunityId(value ? Number(value) : null);
   };
 
   const handleFileChange =(e: ChangeEvent<HTMLInputElement>) => {
@@ -66,6 +77,19 @@ export const CreatePost = () =>{
       <label htmlFor="content" className="block mb-1 font-medium">Content</label>
       <textarea  id="content" required  rows={5} onChange={(event) =>setContent(event.target.value)} className="w-full border border-white/10 bg-transparent p-2 rounded"/>
     </div>
+
+    <div>
+        <label> Select Community</label>
+        <select id="community" onChange={handleCommunityChange}>
+          <option value={""}> -- Choose a Community -- </option>
+          {communities?.map((community, key) => (
+            <option key={key} value={community.id}>
+              {community.name}
+            </option>
+          ))}
+        </select>
+      </div> 
+
 
     <div>
       {" "}
